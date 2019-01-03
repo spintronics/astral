@@ -1,0 +1,1 @@
+export default AstralContext = React.createContext('astral')
