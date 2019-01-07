@@ -1,0 +1,6 @@
+/# Mac Crap
+.DS*
+
+*.orig
+node_modules/
+/npm-debug.log

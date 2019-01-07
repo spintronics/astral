@@ -1,0 +1,13 @@
+{
+  "restartable": "rs",
+  "ignore": [".git", "node_modules/**/node_modules"],
+  "verbose": false,
+  "execMap": {
+    "js": "node -r esm"
+  },
+  "watch": ["server.js", "middleware.js", "templates/page.js"],
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "ext": "js json"
+}

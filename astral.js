@@ -1,19 +1,31 @@
-import htm from 'https://unpkg.com/htm?module'
-import AstralContext from './context';
+import { parseData, topLevelScope } from './util.js'
+import { Store, AstralContext } from './store.js'
+
 const html = htm.bind(React.createElement)
-let pageContext = JSON.parse(document.getElementById('pageContext'))
 
+let universe = topLevelScope({
+  React,
+  ReactDOM,
+  R,
+  html
+})
 
-const Astral = (context) => {
-  return html `
-    <${AstralContext.Provider} value=${context}>
-      <div>hello world!</div>
+let siteContext = parseData('siteContext') || {}
+
+const Astral = props => {
+  return html`
+    <${AstralContext.Provider} value=${siteContext}>
+      <${Store} initialState=${R.omit(['children'], props)}>
+        ${
+          ({ state, dispatch }) => {
+            return html`
+              <div>${JSON.stringify(state)}</div>
+            `
+          }
+        }
+      <//>
     <//>
   `
 }
 
 export default Astral
-
-ReactDOM.render(
-  React.createElement(Astral, pageContext, null)
-)
