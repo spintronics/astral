@@ -1,6 +1,6 @@
 /# Mac Crap
 .DS*
-
+lighthouseReport.json
 *.orig
 node_modules/
 /npm-debug.log

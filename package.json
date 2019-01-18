@@ -1,12 +1,12 @@
 {
-  "name": "midas",
+  "name": "astral",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "test": "mocha -r esm test",
-    "build": "rollup astral.js --format iife --name \"build\" --file bundle.js",
-    "start": "nodemon server.js"
+    "start": "sudo PORT=443 nodemon server.js",
+    "debug": "DEBUG_PORT=3000 node -r esm --inspect-brk=9229 --nolazy server.js"
   },
   "keywords": [],
   "author": "",
@@ -21,15 +21,19 @@
   },
   "dependencies": {
     "esm": "^3.0.84",
+    "flat": "^4.1.0",
     "fluture": "^10.3.0",
+    "htm": "^2.0.0",
     "koa": "^2.6.2",
     "koa-compose": "^4.1.0",
+    "koa-compress": "^3.0.0",
     "koa-logger": "^3.2.0",
     "koa-static": "^5.0.0",
-    "lit-html": "^0.14.0",
     "ramda": "^0.26.1",
     "react": "^16.7.0-alpha.0",
     "react-dom": "^16.7.0-alpha.0",
-    "shopify-buy": "^1.11.0"
+    "rxjs": "^6.3.3",
+    "shopify-buy": "^1.11.0",
+    "uglify-js": "^3.4.9"
   }
 }

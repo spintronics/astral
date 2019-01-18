@@ -1,31 +1,34 @@
-import { parseData, topLevelScope } from './util.js'
-import { Store, AstralContext } from './store.js'
+import { getAstralContext } from './store.js'
+import * as util from './util.js'
 
-const html = htm.bind(React.createElement)
-
-let universe = topLevelScope({
-  React,
-  ReactDOM,
-  R,
-  html
-})
-
-let siteContext = parseData('siteContext') || {}
-
-const Astral = props => {
-  return html`
-    <${AstralContext.Provider} value=${siteContext}>
-      <${Store} initialState=${R.omit(['children'], props)}>
-        ${
-          ({ state, dispatch }) => {
-            return html`
-              <div>${JSON.stringify(state)}</div>
-            `
-          }
-        }
-      <//>
-    <//>
-  `
+const Astral = (Page, siteContext = {}) => {
+  let AstralContext = getAstralContext()
+  let { routes = {} } = siteContext
+  return (props = {}) => {
+    if (typeof window !== 'undefined') {
+      window.util = util
+      React.useEffect(
+        R.once(() => {
+          window.performance.mark('first-render')
+          window.performance.measure('first render', 'start', 'first-render')
+          window.performance.measure('dom loaded', 'start', 'dom-loaded')
+          window.performance.measure(
+            'scripts loaded',
+            'start',
+            'scripts-loaded'
+          )
+          window.performance
+            .getEntriesByType('measure')
+            .forEach(measure =>
+              console.log(`${measure.name} in ${measure.duration} ms`)
+            )
+        })
+      )
+    }
+    return html`
+      <${AstralContext.Provider} value=${siteContext}><${Page} ...${props}/><//>
+    `
+  }
 }
 
 export default Astral
