@@ -1,14 +1,15 @@
 import fs from 'fs'
 import serve from 'koa-static'
-import compose from 'koa-compose'
+import * as koaCompose from 'koa-compose'
 import logger from 'koa-logger'
 import compress from 'koa-compress'
 import R from 'ramda'
 import constants from './constants'
 import reactDOMserver from 'react-dom/server'
-import { theGoodStuff } from './util'
+import { theGoodStuff, compose } from './lib/util'
 import { promisify } from 'util'
-import { importMap } from './universe'
+import { importMap } from './lib/universe'
+import { withRouter } from './wrappers/router.js'
 import path from 'path'
 
 let log = R.tap(console.log)
@@ -36,15 +37,15 @@ const resolveImportMap = map => {
   })
 }
 
-export let httpRedirect = (ctx, next) => {
-  if (!ctx.request.secure) {
-    return ctx.redirect(
-      'https://' +
-        R.pathOr(process.env.DOMAIN, ['request', 'headers', 'host'], ctx) +
-        ctx.request.url
-    )
-  } else return next()
-}
+// export let httpRedirect = (ctx, next) => {
+//   if (!ctx.request.secure) {
+//     return ctx.redirect(
+//       'https://' +
+//         R.pathOr(process.env.DOMAIN, ['request', 'headers', 'host'], ctx) +
+//         ctx.request.url
+//     )
+//   } else return next()
+// }
 
 export let contextProvider = async (ctx, next) => {
   //if not pageRoutes add to siteContext by reading filenames
@@ -52,8 +53,15 @@ export let contextProvider = async (ctx, next) => {
   if (!ctx.siteContext.pageDir) {
     let pageDir = await promisify(fs.readdir)(path.resolve('./pages'))
     ctx.siteContext.pageDir = pageDir.filter(pageName => pageName[0] !== '_')
+    //update this to support nested routes
     ctx.siteContext.pageRoutes = R.reduce(
-      (a, page) => R.set(R.lensProp(R.replace(/\W/g, '')), `/${page}`, a),
+      (a, page) =>
+        R.set(
+          R.lensProp(R.head(page.split('.')).replace(/\W/g, '')),
+          `/${page.split('.').shift()}`,
+          a
+        ),
+      {},
       ctx.siteContext.pageDir
     )
   }
@@ -87,15 +95,21 @@ export let pageServer = async (ctx, next) => {
 
     ctx.status = page ? 200 : 404
 
+    let { pageRoutes = {} } = ctx.siteContext
+
     let renderedPage = page
       ? reactDOMserver.renderToString(
-          postLoad.Astral(page, ctx.siteContext)(
-            Object.assign(initialProps, {
-              serverRendered: true
-            })
-          )
+          compose(withRouter(pageRoutes))(
+            postLoad.Astral(page, ctx.siteContext)
+          )(initialProps)
         )
       : postLoad._404(ctx)
+
+    console.log(renderedPage)
+
+    let loadFirst = {
+      React: 1
+    }
 
     ctx.body = postLoad._document({
       context: ctx,
@@ -105,15 +119,23 @@ export let pageServer = async (ctx, next) => {
       title: 'Astral',
       description: ctx.pageContext.description || 'in a space out of time',
       url: `https://${ctx.request.host}${ctx.path}`,
-      headScripts: Object.values(importMap).reduce((str, browserImport) => {
-        return str + `<script src="${browserImport}" async defer></script>`
-      }, ''),
+      headScripts: Object.entries(importMap).reduce(
+        (str, [key, browserImport]) => {
+          return (
+            str +
+            `<script src="${browserImport}" ${
+              key in loadFirst ? '' : 'async defer'
+            }></script>`
+          )
+        },
+        ''
+      ),
       initialize: `
         <script type="module">
           ${page ? `import page from '${requestPath}'` : ''}
           import Astral from './astral.js'
-          import universe from './universe.js'
-          import {compose, prop} from './util.js'
+          import universe from './lib/universe.js'
+          import {compose, prop} from './lib/util.js'
           import {withRouter} from './wrappers/router.js'
 
           let siteContext = window.siteContext = ${JSON.stringify(
@@ -145,9 +167,7 @@ export let pageServer = async (ctx, next) => {
           })
         </script>
       `,
-      body: `
-        ${renderedPage}
-      `
+      body: renderedPage
     })
     // ctx.set('Content-Type', 'application/vnd.myapi.v1+json');
   }
@@ -175,17 +195,17 @@ export let staticFiles = limitExposure(
   serve('.')
 )
 
-export default compose([
+export default koaCompose.default([
   contextProvider,
-  httpRedirect,
+  // httpRedirect,
   logger(),
-  compress({
-    filter: function(content_type) {
-      return /text|javascript/i.test(content_type)
-    },
-    threshold: 2048,
-    flush: require('zlib').Z_SYNC_FLUSH
-  }),
+  // compress({
+  //   filter: function(content_type) {
+  //     return /text|javascript/i.test(content_type)
+  //   },
+  //   threshold: 2048,
+  //   flush: require('zlib').Z_SYNC_FLUSH
+  // }),
   staticFiles,
   pageServer
 ])

@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer'
-import { log, flatten } from '../util'
+import { log, flatten } from '../lib/util'
 import assert from 'assert'
 import opts from './puppeteerOptions'
 import R from 'ramda'

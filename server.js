@@ -1,6 +1,6 @@
 import Koa from 'koa'
 import middleware from './middleware'
-import { setUniverse } from './universe'
+import { setUniverse } from './lib/universe'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import R from 'ramda'
@@ -12,7 +12,7 @@ import chokidar from 'chokidar'
 import constants from './constants'
 import fs from 'fs'
 import path from 'path'
-import { log } from './util'
+import { log } from './lib/util'
 import crypto from 'crypto'
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -23,7 +23,9 @@ const astral = new Koa()
 
 const html = htm.bind(React.createElement)
 
-const { PORT = 3000, HOST = 'localhost', DEBUG_PORT } = process.env
+const { PORT, HOST = 'localhost', ENVIRONMENT = 'development' } = process.env
+
+console.log(ENVIRONMENT, PORT, HOST)
 
 let universe = setUniverse({
   React,
@@ -57,16 +59,19 @@ astral.on('error', (err, ctx) => {
 
 astral.use(middleware)
 
-const server = http2.createSecureServer(
-  {
-    allowHTTP1: true,
-    key: fs.readFileSync(path.resolve('cert/server.key')),
-    cert: fs.readFileSync(path.resolve('cert/server.crt')),
-    secureOptions:
-      crypto.constants.SSL_OP_NO_SSLv3 | crypto.constants.SSL_OP_NO_TLSv1
-  },
-  astral.callback()
-)
+const server =
+  ENVIRONMENT === 'prod'
+    ? http2.createSecureServer(
+        {
+          allowHTTP1: true,
+          key: fs.readFileSync(path.resolve('cert/server.key')),
+          cert: fs.readFileSync(path.resolve('cert/server.crt')),
+          secureOptions:
+            crypto.constants.SSL_OP_NO_SSLv3 | crypto.constants.SSL_OP_NO_TLSv1
+        },
+        astral.callback()
+      )
+    : http.createServer(astral.callback())
 
 server.on('error', console.error)
 
@@ -96,11 +101,21 @@ chokidar.watch('.', { ignored: /(^|[\/\\])\../ }).on('all', (event, path) => {
   }
 })
 
-server.listen(DEBUG_PORT || PORT, HOST, portListener)
+server.listen(
+  PORT ||
+    {
+      debug: 3000,
+      production: 443,
+      development: 3000
+    }[ENVIRONMENT],
+  HOST,
+  portListener
+)
 
-http
-  .createServer(astral.callback())
-  .listen((DEBUG_PORT && DEBUG_PORT + 0) || 80, HOST, portListener)
+// this is creating a second server to redirect non https traffic
+// but i think it's a little heavy handed and should be done in vanilla node
+//   .createServer(astral.callback())
+//   .listen((DEBUG_PORT && DEBUG_PORT + 0) || 80, HOST, portListener)
 
 function portListener() {
   const { address, port } = this.address()

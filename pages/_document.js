@@ -36,8 +36,8 @@ export default config => html`
       </script>
       ${config.styles}
       <script type="module" id="bootstrap">
-        import { storage, registerScriptsLoadedEvent } from './util.js'
-        import { importMap, setUniverse } from './universe.js'
+        import { storage, registerScriptsLoadedEvent } from './lib/util.js'
+        import { importMap, setUniverse } from './lib/universe.js'
 
         let session = storage(window.sessionStorage)
 

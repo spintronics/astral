@@ -1,5 +1,5 @@
-import { getAstralContext } from './store.js'
-import * as util from './util.js'
+import { getAstralContext } from './wrappers/store.js'
+import * as util from './lib/util.js'
 
 const Astral = (Page, siteContext = {}) => {
   let AstralContext = getAstralContext()

@@ -1,10 +1,10 @@
-#Astral
-##Goals
+# Astral
+
+## Goals
 
 - Platform agnostic base project for e-commerce sites
-- No transpilation
-- user service worker to replace client side libraries with cdn versions
-- Universal client and api
+- No transpilation / compilation
+- Universal client, api, and data store
 - Able to target desktop / mobile
 - [Progressive Web App](https://developers.google.com/web/progressive-web-apps/checklist)
 - Provide front-end test ability with generic #ids

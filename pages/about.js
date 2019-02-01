@@ -1,8 +1,10 @@
-import { compose } from '../util.js'
+import { compose } from '../lib/util.js'
+import { withRouter } from '../wrappers/router.js'
 
 let about = props => {
   return html`
     <div id="page-wrapper">
+      about
       <nav>
         <a href="/" ...${{ accessKey: 'h' }}
           ><button name="Home">HOME</button></a
@@ -11,5 +13,4 @@ let about = props => {
     </div>
   `
 }
-
 export default compose(withRouter({}))(about)
