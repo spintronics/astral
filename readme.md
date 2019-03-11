@@ -2,7 +2,6 @@
 
 ## Goals
 
-- Platform agnostic base project for e-commerce sites
 - No transpilation / compilation
 - Universal client, api, and data store
 - Able to target desktop / mobile
